@@ -6,5 +6,8 @@ tweets = LOAD '/home/cs5604s16_cm/CS5604S16/small_data/z_541/part-m-00000' USING
 
 -- Remove urls
 urls = FOREACH tweets GENERATE id, REPLACE(text, '(http://\\S+)', '');
-STORE urls INTO 'cleaned_tweets';
 
+-- Remove non-characters
+nonchar_clean = FOREACH urls_clean GENERATE id, REPLACE(url_clean, '([^a-zA-Z0-9\\s]+)', '');
+
+STORE nonchar_clean INTO 'cleaned_tweets';
