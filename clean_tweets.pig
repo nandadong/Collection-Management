@@ -43,5 +43,8 @@ profanities_clean = FOREACH nonchars_clean GENERATE id,
 	'douche', '' 
 	) AS profanity_clean;
 
-STORE profanities_clean INTO 'cleaned_tweets';
+-- Remove empty rows
+empty_rows_clean = FILTER profanities_clean BY id MATCHES '700-.*';
+
+STORE empty_rows_clean INTO 'cleaned_tweets';
 																														
