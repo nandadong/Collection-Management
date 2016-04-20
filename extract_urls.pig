@@ -1,14 +1,23 @@
 /*
  * run by "$pig -x local extract_urls.pig" if file in local file system.
  */
-
 -- Data loading
-tweets = LOAD '/home/cs5604s16_cm/CS5604S16/small_data/z_541/part-m-00000' USING PigStorage('\t') AS  (id:INT, text:CHARARRAY);
+tweets = LOAD '/home/cs5604s16_cm/CS5604S16/small_data' USING PigStorage('\t') AS  (id:CHARARRAY, text:CHARARRAY);
+-- Remove invalid rows
+--tweets = FILTER tweets BY (id MATCHES '541-.*' OR id MATCHES '602-.*' OR id MATCHES '668-.*' OR id MATCHES '686-.*' OR id MATCHES '694-.*' OR id MATCHES '700-.*');
 -- Extract URL using regular expression
-urls = FOREACH tweets GENERATE REGEX_EXTRACT(text, '.*(http://\\S+).*', 1) AS url;
+tweetwords = FOREACH tweets GENERATE id, FLATTEN( TOKENIZE(text) ) AS word;
+urls = FILTER tweetwords BY word MATCHES '(http://|https://)\\S+';
 -- Trim unnecessary characters
-urls_clean = FOREACH urls GENERATE REPLACE(url, 'â€¦','...');
--- Store URL with and without duplicates
+urls_clean = FOREACH urls GENERATE id, REPLACE(REPLACE(REPLACE(REPLACE(word, 'â€.','...'), '@\\S+', ''), '#\\S+', ''), 'ðŸ’™', '...') AS url;
+--urls_clean = FOREACH urls_clean GENERATE id, REPLACE(url, '@\\S+', '') AS url;
+--urls_clean = FOREACH urls_clean GENERATE id, REPLACE(url, '#\\S+', '') AS url;
+
+-- Store clean URLs
 STORE urls_clean INTO 'urls';
-urls_uniq = distinct urls_clean;
-STORE urls_uniq INTO 'urls_uniq';
+double_urls = FOREACH urls_clean GENERATE id, REGEX_EXTRACT(url, '(http.*)(http\\S+)', 1) AS url1, REGEX_EXTRACT(url, '(http.*)(http\\S+)', 2) AS url2;
+double_urls = FILTER double_urls BY ($1 IS NOT NULL);
+--double_urls = FOREACH double_urls GENERATE id, CONCAT(url1, ',', url2);
+-- Store double URLs 
+STORE double_urls INTO 'double_urls';
+
