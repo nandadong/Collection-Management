@@ -13,10 +13,12 @@ tweetwords = FOREACH tweets GENERATE id, FLATTEN( TOKENIZE(text) ) AS word;
 
 -- Search for only hashtags in the tweets
 hashtags = FILTER tweetwords BY UPPER(word) MATCHES '#\\s*(\\w+)';
-
+grpd = group hashtags by id;
+hashtags = foreach grpd generate group, BagToString(hashtags.word, ' ');
 STORE hashtags INTO 'hashtags';
 
 -- Same process as hashtags, finding mentions(@) 
 mentions = FILTER tweetwords BY UPPER(word) MATCHES '@\\s*(\\w+)';
-
+grpd = group mentions by id;
+mentions = foreach grpd generate group, BagToString(mentions.word, ' ');
 STORE mentions INTO 'mentions';
